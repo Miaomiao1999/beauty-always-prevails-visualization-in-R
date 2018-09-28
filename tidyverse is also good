@@ -1,0 +1,207 @@
+
+# Toy datasets to use
+
+# tibble is a trimmed down version of data.frame(), they are several good features about tibble,
+# tribble() is used to create a small datset
+
+
+band <- tribble(
+   ~name,     ~band,
+  "Mick",  "Stones",
+  "John", "Beatles",
+  "Paul", "Beatles"
+)
+
+instrument <- tribble(
+    ~name,   ~plays,
+   "John", "guitar",
+   "Paul",   "bass",
+  "Keith", "guitar"
+)
+
+instrument2 <- tribble(
+    ~artist,   ~plays,
+   "John", "guitar",
+   "Paul",   "bass",
+  "Keith", "guitar"
+)
+```
+
+## Mutating joins
+
+### 1.  *left_join(x, y, by="key variable")*: keeps all the observations (rows) in x
+
+A key is a variable that uniquely identifies an observation, otherwise, we need multiple variables to identify an observation,
+
+```{r}
+## left_join(x, y, by="key variable")  
+## join y to x, x is the primary dataset
+## mutate new variables in x by copying different variables in y
+## return a new dataset
+
+## left_join(x, y, by=c("key variable1", "key variable2"))
+
+data1<-left_join(band, instrument, by="name")
+data1
+```
+
+### 2. *right_join(x, y, by="")*: keep all the observations (rows) in y
+
+The opposite way of *left_join()*
+
+```{r}
+data2<-right_join(band, instrument, by="name")
+data2
+```
+
+Your turn >>>
+Make data be the same as data1 with the *right_join()*:
+
+```{r}
+
+
+setequal(data1, data) # check whether two datasets are the same
+```
+
+
+
+
+### 3. *inner_join()* keeps all the observations in **both** x and y
+An inner join keeps observations that appear in both tables. But unmatched rows are not included in the result, it is easy to lose observatoins.   
+
+```{r}
+inner_join(band, instrument, by="name")
+```
+
+
+### 4. *full join* keeps all observations in x and y
+
+```{r}
+full_join(band, instrument, by="name")
+```
+
+![](joins.png)
+
+## Filtering joins
+
+### 1. *semi_join(x,y, by="")* keeps all the observations of x that have a match in y
+
+
+use semi_join() to collect the artists in *band* that have instrument info in *instrument*.
+```{r}
+semi_join(band, instrument, by="name")
+
+## use semi_join() to collect the artists in *band* that have instrument info in *instrument*.
+```
+
+Your turn >>>
+Use *right_join*, *left_join*, *filter()*, *select()* to get the same dataset above with *semi_join()*
+
+
+
+
+
+### 2. *anti_join(x,y, by="")* drops all the observations of x that have a match in y.  *anti_join()* also provide a great way to diagnose joins that go wrong.
+
+```{r}
+anti_join(band, instrument, by="name")
+
+## Use an anti_join() to return the rows of artists for which you don't have any instrument info.
+```
+
+
+
+### Set operations
+
+```{r}
+# union(dataset1, dataset2) 
+# data1 and data2 have the same variables
+# intersect(dataset1, dataset2)
+# setdiff(dataset1, dataset2)
+# setequal()
+
+```
+
+
+#### Example: join relational datasets connected by key variables 
+
+```{r,eval=FALSE}
+# check out the package "nycflights13"
+
+flights # connects to 
+planes # via a single variable *tailnum*
+
+flights # connects to 
+airlines # through the *carrier* variable 
+
+flights # connects to 
+airports # via two variables *origin* and *dest*
+
+flights # connects to 
+weather # via *origin*, *year*, *month*, *day*, and *hour*
+
+```
+
+## Connect data by keys
+A key is a variable that uniquely identifies an observation. (for example, each plane is uniquely identified y its *tailnum*) Otherwise, we need multiple variables to identify an observation, (for example, each observation in **weather** needs five variables *year*, *month*, *day*, *hour*, and *origin*).
+```{r}
+planes %>%
+  count(tailnum) %>%
+  filter(n>1)
+
+# count is to calculate the number of occurrences of each observation
+# the same as the below group_by()+summarise(n())
+
+planes %>%
+  group_by(tailnum) %>%
+  summarise(count=n()) %>%
+  filter(n>1)
+
+weather %>%
+   count(year, month, day, hour, origin) %>%
+  filter(n>1)
+
+flights %>%
+  count(year, month, day, flight, sort=T) %>%
+  filter(n>1)
+```
+
+ 
+## Examples
+```{r, eval=TRUE} 
+inner_join(flights, airlines, by="carrier") 
+
+flights %>%
+  select(year:day, hour, origin, dest, tailnum, carrier) %>%
+  left_join(weather) # matching by all the common variables
+```
+
+## Examples 
+```{r,eval=TRUE}
+flights %>%
+  left_join(airports, by=c("dest"="faa")) # match  variable dest in the flights to faa in the airport, output is the dest
+```
+
+
+
+How many airports in `airports` are serviced by flights in our dataset? (i.e. flights originating in New York)
+
+flights %>%
+  inner_join(airports, by=c("dest"="faa")) %>%
+  summarise(n_distinct(name))
+
+Which airlines had the largest arrival delays? 
+
+names(flights)
+names(airlines)
+flights %>%
+  inner_join(airlines, by="carrier") %>% 
+  drop_na(arr_delay) %>%
+  select(name, arr_delay) %>%
+  group_by(name) %>%
+ summarise(average=mean(arr_delay, na.rm=TRUE)) %>%
+ arrange(desc(average))
+
+
+
+```
