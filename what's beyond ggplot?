@@ -1,0 +1,115 @@
+## qplot()
+
+qplot() is short for quick plot, it is easy to produce complex plots, often requiring several lines of codes by other plotting systems, in one line.
+
+For the dataset *tips*:
+
+Import the dataset:
+```{r}
+library(ggplot2)
+
+tips<-read.csv("/Users/Miaomiao/Desktop/QTM 151/tips.csv")
+```
+
+The histogram of tip:
+```{r}
+ggplot(tips, aes(x=tip))+
+  geom_histogram(binwidth = 0.2)
+```
+
+qplot():
+```{r}
+#qplot(variables, geometry, color, size, shape, facet, dataset)
+qplot(tip, geom = "histogram", binwidth=0.3, data=tips)
+```
+
+
+Tip vs total bill:
+```{r}
+ggplot(tips, aes(x=totbill, y=tip))+
+geom_point()+
+  geom_smooth(method="lm")
+```
+
+
+
+
+Tip vs sex:
+
+```{r}
+ggplot(tips, aes(x=sex, y=tip))+
+  geom_boxplot()
+```
+## qplot
+```{r}
+qplot(x=sex, y= tip, geom = "boxplot" , data=tips)
+```
+
+
+
+Tip vs sex and time:
+
+```{r}
+ggplot(tips, aes(x=sex, y=tip))+
+  geom_boxplot()+
+  facet_grid(~time)
+```
+
+
+## qplot
+```{r}
+qplot(sex, tip, geom = "boxplot", facets = ~time, data= tips)
+```
+
+```{r}
+ggplot(tips, aes(x=sex:time, y=tip))+
+  geom_boxplot()
+```
+
+```{r}
+qplot(sex:time, tip, geom = "boxplot", facets = ~time, data = tips)
+
+# sex:time categorizes sex and time into four categories femaleday, femalenight, maleday, malenight
+```
+
+
+Tip vs total bill by sex
+
+```{r}
+ggplot(tips, aes(x=totbill, y=tip))+
+  geom_point()+
+  facet_grid(~sex)
+```
+
+Tip vs total bill by sex and time, marking labels by party size.
+
+ggplot:
+```{r}
+ggplot(tips, aes(x=totbill, y=tip))+
+  geom_point(aes(color = smoker)) +  #separate dots and labels
+  facet_grid(sex~time)+
+  geom_smooth(method="lm")+  #add smooth line aka linear regression line
+  
+  geom_text(aes(label = size), size = 5, color = "red")  # assign labels to the variable, in this case it is the party size
+```
+
+
+qplot:
+```{r}
+qplot(totbill, tip, geom = "point", facets = sex~time, color = smoker, data = tips) +
+  geom_smooth(method = "lm")
+
+# we get two linear smooth lines, because every variable is a global variable, but in ggplot, every variable is a local variable
+```
+
+
+
+## Plotly
+
+
+```{r}
+library(plotly)
+plot_ly(tips, tips$totbill, tips$tip, mode="markers", color=tips$sex)
+
+# dataset name, x variable, y variable
+```
