@@ -1,0 +1,143 @@
+library(tidyverse)
+library(purrr)
+```
+
+
+
+## purrr package make the interaction with elements in the list.
+
+```{r}
+# Toy data
+set.seed(1000)
+exams <- list(
+  # in dataframe all the vectors have to have the same length 
+  # extract the first column data.frame[,1]
+  # in list the vectors dont have to have the same length
+  # list[[1]]
+  student1 = round(runif(10, 50, 100)),
+  student2 = round(runif(10, 50, 100)),
+  student3 = round(runif(10, 50, 100)),
+  student4 = round(runif(10, 50, 100)),
+  student5 = round(runif(10, 50, 100))
+)
+exams
+#mean(exams) doesnot work
+
+extra_credit <- list(0, 0, 10, 10, 15)
+```
+
+
+Here is a list: store arbitrary collections of different type of vectors. (list is different from data frame, data frame stores different vectors with the same length like spreadsheet)
+
+```{r}
+a_list <- list(num = c(8, 9), #number
+            log = TRUE,    #t/f
+            cha = c("a", "b", "c")) #character
+a_list
+a_list$num  # elements
+a_list["num"] # a list  
+a_list[[1]] #first column "num" out
+```
+
+The above are three subsetting commands. Do they return the same values? Run the code chunk above, and then run the code chunks below to confirm
+
+
+
+```{r}
+vec <- c(-2, -1, 0, 1, 2)
+abs(vec)
+```
+
+```{r}
+lst <- list(-2, -1, 0, 1, 2)
+# not numerical vector, but just  a list cannot do!
+abs(lst)
+```
+
+
+```{r}
+# create a list
+list(student1 = mean(exams$student1),
+     student2 = mean(exams$student2),
+     student3 = mean(exams$student3),
+     student4 = mean(exams$student4),
+     student5 = mean(exams$student5))
+```
+
+What if there are 100 students in the class? For loop...
+
+```{r}
+# function of collection_mean for loop
+collection_mean <- function(list) # incout of the whole list
+  {
+  output <- vector("double", length(list))  # double vector, is a numeric vector
+  for (i in seq_along(list)) {     # seq_along is to get the index of elements of the list,  try seq_along(exams)
+    output[i] <- mean(list[[i]])
+  }
+  output
+}
+
+
+collection_mean(exams)
+
+
+```
+
+
+
+## map() function in the purrr package
+
+
+```{r}
+# map() when you use the purrr:map function, make sure restart R in the session, ggplot also has the map function
+map(exams, mean) # map the mean function to each element, and then return a list
+
+# map() first argument is the dataset, mean is function, to create a list
+```
+
+
+Calculate the variance (`var()`) of each student exam grades.
+
+```{r}
+exams %>% 
+  map(var)
+```
+
+
+Calculate the max grade (max())for each student. Return the result as a vector.
+
+```{r}
+exams %>% 
+  map(max)
+#if i dont want any list, just want a vector
+exams %>%
+  map_dbl(max)
+```
+
+
+Compute a final grade for each student, where the final grade is the average test score plus any `extra_credit` assigned to the student. Return the results as a double (i.e. numeric) vector.
+
+```{r}
+
+
+#for loop approach
+# map2 works on two lists
+
+finalgrade<-function(x,y) {mean(x)+y}
+map2_dbl(exams, extra_credit, finalgrade)
+
+# map approach
+
+exams %>% 
+map_dbl(mean) %>%
+  # add extra credit to the mean
+  map2(extra_credit,sum)
+
+#
+
+exams %>% 
+  map2_dbl(extra_credit, function(x,y) mean(x)+y)  # it is the best!!!
+# exams passes to the first argument of map2_dbl()
+
+
+
