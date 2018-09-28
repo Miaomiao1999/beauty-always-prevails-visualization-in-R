@@ -1,0 +1,226 @@
+## tibble 1
+*tibble* is very similar to *data.frame*, which is better to read a large data set.
+
+```{r,echo=FALSE}
+
+# population table
+table1<-tibble(
+  `country`=c("Afghanistan","Brazil","China"),
+  `1999`=c(19987071, 172006362, 1272915272),
+  `2000`=c(20595360, 174504898, 1280428583)
+)
+table1
+```
+
+```{r, echo=FALSE}
+# case table
+table2<-tibble(
+    `country` = c("Afghanistan","Brazil","China"),
+  `1999` = c(745, 37737, 212258),
+  `2000` = c(2666, 80488, 213766)
+)
+table2
+
+```
+
+## tidyr
+The *tidyr* package helps tidy up messy datasets. 
+
+There are three interrelated rules which make a dataset tidy:
+
+- Each variable must have its own column
+
+- Each observation must have its own row
+
+- Each value must have its own cell
+
+There are a few key functions in the *tidyr* package, *gather()*, *spread()*, *separate()*, *unite()*, *complete()*, *fill()*.
+
+
+## gather()
+To tidy  a dataset, we need to *gather* multiple columns, and gathers them into key-value pairs: it makes "wide" data longer.
+```{r}
+#template
+# gather(a set of columns, 
+#         key="the name of variable whose values form the column names", 
+#         value="the name of variable whose values are spread over the cells")
+```
+
+
+### Example 1:
+```{r}
+newtable1<-table1 %>%
+  gather(`1999`,`2000`, key="year", value="population")
+newtable1
+```
+
+
+### Example 2:
+```{r}
+newtable2 <- table2 %>%
+  gather(`1999`,`2000`, key= year, value= cases)
+newtable2
+```
+
+Your turn >>>>>>>>>>>>>>>>
+Join the tables:
+```{r}
+table<- inner_join(newtable1, newtable2) 
+
+table
+```
+
+
+## spread()
+*spread()* is the opposite of *gather()*. *gather()* makes wide tables narrower and longer, *spread()* makes long tables shorter and wider.
+```{r, echo=FALSE}
+#template
+#spread(data, 
+#       key="the column that contains variable name", 
+#       value="the column that contains values forms multiple variables")
+```
+
+
+```{r}
+table3<- tibble(
+  `country` = c("Afghanistan", "Afghanistan", "Afghanistan", "Afghanistan", "Brazil", "Brazil", "Brazil", "Brazil","China", "China","China", "China"),
+   `year` = c(1999,1999,2000,2000,1999,1999,2000,2000,1999,1999,2000,2000),
+   `type` = c("case", "population","case", "population","case", "population","case", "population","case", "population","case", "population"),
+   `count` = c(745, 19987071, 2666, 20595360, 37737, 172006362, 80488, 174504898, 212258, 1272915272, 213766, 1280428583)
+)
+table3
+```
+
+
+## spread() 
+Example 1:
+```{r}
+table5<-spread(table3, key= "type", value= "count") 
+table5
+```
+
+YOUR TURN  >>>>>>>>>>>>>>>>>>>>>>>>..
+
+
+```{r}
+# Toy data
+cases <- tribble(
+  ~Country, ~"2011", ~"2012", ~"2013",
+      "FR",    7000,    6900,    7000,
+      "DE",    5800,    6000,    6200,
+      "US",   15000,   14000,   13000
+)
+
+pollution <- tribble(
+       ~city, ~size, ~amount,
+  "New York", "large",      23,
+  "New York", "small",      14,
+    "London", "large",      22,
+    "London", "small",      16,
+   "Beijing", "large",     121,
+   "Beijing", "small",     121
+)
+
+cases
+pollution
+
+cases1<- cases %>%
+  gather(`2011`,`2012`,`2013`, key=year, value=case)
+
+cases1
+
+pollution1 <- pollution %>%
+  spread( key='size', value = 'amount')
+
+pollution1
+```
+
+1. On a sheet of paper, draw how the 'cases' data set would look if it had the same values grouped into three columns: **country**, **year**, **case**
+
+2. On a sheet of paper, draw how the 'pollution' data set would look if it had the same values grouped into three columns: **city**, **large**, **small**
+
+
+
+
+
+
+## Separate and Unite 
+*separate()* pulls apart one column into multiple columns, *unite()* is the inverse of *separate()*.
+```{r, echo=FALSE}
+table4<-tibble(
+    `country` = c("Afghanistan", "Afghanistan", "Brazil", "Brazil","China", "China"),
+     `year` = c(1999,2000,1999,2000,1999,2000),
+    `rate`= c("745/19987071", "2666 / 20595360", "37737 / 172006362", "80488 / 174504898", "212258/1272915272", "213766/1280428583")
+)
+table4
+```
+
+
+## separate() 
+Example 1:
+```{r}
+table4 %>%
+separate(rate, into = c("case", "population"), sep="/")
+
+table %>%
+separate(year, into = c("century", "year"), sep=2)
+```
+
+
+
+## separate() and unite()
+
+```{r}
+library(nycflights13)
+flights %>%
+  unite(date, year,month, day) %>%
+  separate(time_hour, into=c("date1","hour1"), sep=10)
+```
+
+##Missing value
+
+```{r, echo=FALSE}
+stocks<-tibble(
+  year = rep(c(2015,2016), each=4),
+  qtr = rep(c(1,2,3,4), 2),
+  return = c(1.88, 0.59, 0.35, NA, NA, 0.92,0.17, 2.66)
+)
+stocks
+```
+
+Example 
+```{r}
+stocks %>%
+  spread(key = 'year', value = 'return') %>%
+  gather(`2015`, `2016`, key= year, value= return, na.rm=TRUE)  
+# turn explicit missing values implicit
+```
+
+
+Example
+```{r}
+stocks %>%
+  complete(year, qtr)  # making missing value explicit
+```
+
+
+Example
+```{r}
+stocks %>%
+  fill(return)   # filled with the most recent nonmissing value
+
+```
+
+
+Reshape the layout of the dataset 'babynames'. Calculate the percent of male children by year. Then plot the percent over time.
+
+```{r}
+library(babynames)
+babynames %>%
+  group_by(sex, year) %>%
+  summarise(count = sum(n)) %>%
+  group_by(year) %>%
+  summarise(percentage= count[sex=="M"]/sum(count)) %>%
+  ggplot(aes(year, percentage))+
+  geom_point()
+  
