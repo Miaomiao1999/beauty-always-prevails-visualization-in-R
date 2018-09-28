@@ -1,0 +1,164 @@
+---
+title: "Final Project"
+author: "Christine Zhu, MiaoMiao Zhang, Lucy Sun"
+date: "4/23/2018"
+output: ioslides_presentation
+runtime: shiny
+---
+
+```{r}
+lender_loans <- read.csv("~/Downloads/Project data/main files/lender_loans.csv")
+lenders <- read.csv("~/Downloads/Project data/main files/lenders.csv")
+loans <- read.csv("~/Downloads/Project data/main files/loans.csv")
+loan_repayments <- read.csv("~/Downloads/Project data/supplementary files/loan_repayments.csv")
+```
+
+```{r}
+library(plotly)
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+library(shiny)
+library(tidytext)
+library(countrycode)
+library(lubridate)
+
+
+```
+
+
+
+
+```{r}
+ggplot(lender_loans, aes(country_code, loan_amount))+
+  geom_boxplot(aes(color=country_code)) + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+#Virgin Island, British receives the most amount of loan on avearge. Most of the loans in United States are over 5000.
+ggplot(lender_loans, aes(x=delinquent, y=loan_amount))+
+  geom_point(aes(shape=delinquent),color="red")+
+  labs(x="delinquent", y="loan amount", title="loan amount by whether delinquent record")+
+  scale_shape(name="delinquent")
+#Whether the loan is delinquent or not impacts the loan amount. With record of being delinquent, it is less likely to get loans of more than 5000.
+```
+
+
+```{r}
+
+#From these two graphs we understand that agriculture, retail, and food have the highest demand for loan amounts 
+ggplot(data = lender_loans) +
+  geom_bar(mapping = aes(x = sector, fill = sector)) + 
+  labs(title = "Sectors With Highest Demands For Loans") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+lender_loans %>%  
+  filter(posted_yr == 2011) %>%
+  ggplot(aes(x = sector, fill = sector)) +
+  geom_bar(aes(fill = sector)) + 
+  labs(title = "Sectors With Highest Demands For Loans") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+lender_loans %>% 
+  ggplot(aes(x = sector, y = loan_amount)) + 
+  geom_boxplot(aes(fill = sector)) + 
+  labs(title = "Loan Amounts by Sector", x = "Sector", y = "Loan Amount") + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+
+
+
+#Interactive Plot: Are High-Demand Sectors Consistently High-Demand Across Time
+```{r}
+library(shiny)
+library(ggplot2)
+library(dplyr)
+head(lender_loans)
+
+# Define a server for the Shiny app
+server <- function(input, output) {
+  
+  # Fill in the spot we created for a plot
+  output$loanPlot <- renderPlot({
+    
+    # Render a barplot
+  lender_loans %>%  
+    filter(posted_yr == input$posted_yr) %>%
+    ggplot(aes(x = sector, fill = sector)) +
+    geom_bar(aes(fill = sector)) + 
+    labs(title = "Sectors With Highest Demands For Loans") +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1))
+  })
+}
+
+# Use a fluid Bootstrap layout
+ui <- fluidPage(    
+  
+  # Give the page a title
+  titlePanel("Loan Amount by Sector Per Year"),
+  
+  # Generate a row with a sidebar
+  sidebarLayout(      
+    
+    # Define the sidebar with one input
+    sidebarPanel(
+      selectInput("posted_yr", "Year:", 
+                  choices=unique(lender_loans$posted_yr)),
+      hr(),
+      helpText("Data from Kiva")
+    ),
+    
+    # Create a spot for the barplot
+    mainPanel(
+      plotOutput("loanPlot")  
+    )
+    
+  )
+)
+shinyApp(ui = ui, server = server)
+
+```
+
+
+
+
+```{r}
+loan_repayments2<- loan_repayments %>%
+  select(local_amount, processed_yr, processed_mo, processed_day, settlement_yr, settlement_mo, settlement_day) %>% 
+  mutate(processed_time = make_datetime(processed_yr, processed_mo, processed_day)) %>%
+  mutate(settlement_time = make_datetime(settlement_yr, settlement_mo, processed_day)) %>%
+    mutate(duration = (settlement_time - processed_time)) %>%
+  separate(duration, into = c("time", "unit"), sep="/")
+
+loan_repayments1 <- loan_repayments2 %>%
+  mutate(time1 = as.numeric(loan_repayments2$time)) 
+
+
+```
+
+
+```{r}
+loan_repayments1%>%
+  filter(processed_yr == 2011) %>%
+  plot_ly(x=~settlement_mo, y=~local_amount, z=~time1, type="scatter3d", mode="markers",color=~factor(settlement_mo))
+```
+It looks like an exponential trend for the amount people borrow and the time it takes for them to repay. More specifically, we cannot say too much about the low loan amount, but for high loan amount, we can see that the more the borrower takes, the shorter it takes for him/her to get back. Moreover, the borrowers tend to settle their loans more in January, March, May, July, August, October and December, compared to other months of the year. 
+
+```{r}
+lenders %>%
+    group_by(member_since_yr) %>%
+  
+ggplot(aes(x=loan_count, y=invitee_count))+
+
+  geom_point(aes(col=factor(member_since_yr)))+
+
+  geom_smooth(method="lm")+
+  facet_grid(~member_since_yr) +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+  
+```
+
+No linear relation between the number of times the lenders make the loan and the the number of people they invite. Most of people tend to invite others than making many loans on their own.
+
+
+
