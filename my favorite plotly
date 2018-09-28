@@ -1,0 +1,205 @@
+```{r}
+library(plotly)
+library(tidyverse)
+```
+
+Plotly is an R package for creating interactice web-based graphs.
+
+### Basic plotly graph:
+
+Histogram
+```{r}
+#plot_ly(data, x= xx, y= xx, type= , mode=, color=) transform data into visualization
+
+plot_ly(mtcars, x=~mpg, type="histogram") #histogram
+```
+
+Boxplot
+```{r}
+# change cyl from numerical to factor
+plot_ly(mtcars, x = ~factor(cyl), y=~mpg, type = "box") #boxplot
+```
+
+
+```{r}
+
+# boxpoints = "all" to show the point, and the -2 is two positions left away from the bar
+
+plot_ly(mtcars, x=~factor(cyl), y=~mpg, type="box", boxpoints = "all", pointpos =-2, jitter=0.5, marker=list(color="green")) %>%
+  
+# 
+    layout(title = "Box Plot of mpg by cyl")
+```
+
+Scatterplot
+
+```{r}
+
+# "markers"" as dots "lines+markers" for time series data
+plot_ly(mtcars, x=~wt, y=~mpg, type="scatter", mode="markers")
+```
+
+```{r}
+plot_ly(mtcars, x=~wt, y=~mpg, type="scatter", mode="markers", color=~factor(cyl), text=~paste("cyl:", cyl))
+
+# add one more info of "cyl:""
+```
+
+```{r}
+plot_ly(mtcars, x=~wt, y=~mpg, type="scatter", mode="text+markers",
+        text=~cyl, textposition = 'top right',
+        textfont = list(color = 'red', size = 10))
+
+# more modification on text
+```
+
+
+
+
+```{r}
+plot_ly(mtcars, x=~wt, y=~mpg, type="scatter", mode="text", text=~cyl)
+```
+
+
+
+
+
+```{r}
+plot_ly(mtcars, x = ~wt, y = ~mpg, type="scatter", mode="markers") %>%
+slice(c(which.max(mpg), which.min(mpg))) %>%
+  # use slice to chooose the minimum and maximum
+add_annotations(text =c( "Good mileage", "Bad mileage"))
+  
+```
+
+
+```{r}
+plot_ly(mtcars, x = ~wt, y = ~mpg, type="scatter", mode="markers") %>%
+filter(cyl == 4) %>%
+add_annotations("four cylinder", ax=40)
+```
+
+
+```{r}
+plot_ly(mtcars,x=mtcars$wt,y=mtcars$mpg,type="scatter", mode="markers",color=as.factor(mtcars$cyl))
+```
+
+Continuous color
+```{r, echo=FALSE,message=FALSE}
+plot_ly(mtcars,x=mtcars$wt,y=mtcars$mpg,mode="markers",color=mtcars$disp)
+
+# continuous variable shows continous color
+```
+
+
+size argument
+```{r, echo=FALSE,message=FALSE}
+mtcars
+
+plot_ly(mtcars,x=mtcars$wt,y=mtcars$mpg,mode="markers",color=as.factor(mtcars$cyl),size=~hp)
+
+# holds power for the car
+```
+
+## 3D scatterplot
+```{r,echo=FALSE,message=FALSE}
+library(plotly)
+set.seed(2017)
+temp<-rnorm(100, mean=30, sd= 5)
+pressure<-rnorm(100)
+dtime<-seq(1:100)
+plot_ly(x=temp, y= pressure, z=dtime, type="scatter3d", mode="markers",color=temp)
+
+# color is based on the different temperautres
+
+```
+
+Line graph
+```{r, echo=FALSE, message=FALSE}
+data("airmiles")
+plot_ly(x=time(airmiles), y=airmiles, type="scatter", mode="lines+markers")
+
+# mode=lines + markers is same as linetype
+
+plot_ly(x=time(airmiles), y=airmiles, type="scatter", linetype = TRUE)
+
+
+```
+
+Multi line graph
+```{r, echo=FALSE,message=FALSE}
+library(tidyr)
+library(dplyr)
+library(plotly)
+
+# same time and difffernt observations : combining different time series data together
+
+data("EuStockMarkets")
+
+stocks<-as.data.frame(EuStockMarkets) %>%
+  gather(index, price) %>%
+  mutate(time=rep(time(EuStockMarkets), 4))
+
+
+plot_ly(stocks, x=~time, y= ~price, color=~index, type="scatter", mode="markers")
+```
+
+Barplot, Scatterplot + Lines
+
+```{r}
+fbi<-read.csv("/Users/Miaomiao/Desktop/QTM 151/fbi.csv")
+
+head(fbi)
+data1<-fbi %>%
+  filter(State=="Georgia") %>%
+  group_by(Year) %>%
+  summarise(count=sum(Murder))
+
+data2<-fbi %>%
+  filter(State=="California") %>%
+  group_by(Year) %>%
+  summarise(count1=sum(Murder))
+
+data3<-merge(data1,data2, by="Year")
+
+
+plot_ly(data3, x = ~Year, y = ~count, type = 'scatter', mode="lines+markers", name = 'G') %>%
+add_trace(y = ~count1, name = 'C') %>%
+  layout(yaxis = list(title = 'Counts of two states'))
+```
+
+```{r}
+fbi<-read.csv("/Users/Miaomiao/Desktop/QTM 151/fbi.csv")
+
+head(fbi)
+data1<-fbi %>%
+  filter(State=="Georgia") %>%
+  group_by(Year) %>%
+  summarise(percentage1=Murder/Population) 
+
+
+data2<-fbi %>%
+  filter(State=="California") %>%
+  group_by(Year) %>%
+  summarise(percentage2= Murder/Population) 
+
+data4<-merge(data1,data2, by="Year")
+data4%>%
+  ggplot(aes(x = Year, y = percentage1))+
+  geom_point()
+
+
+
+```
+
+
+```{r}
+plot_ly(mtcars,x=mtcars$wt,y=mtcars$mpg,type="scatter", mode="markers")
+
+g<-ggplot(mtcars, aes(x=wt,y=mpg))+
+  geom_point()
+
+ex1<-ggplotly(g)
+ex1
+
+```
