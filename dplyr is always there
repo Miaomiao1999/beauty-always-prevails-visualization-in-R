@@ -1,0 +1,227 @@
+#filter(observation) take out some reservations each rows 
+#arrange(observation)
+
+
+#select(variable) select the columns 
+#mutate(create new variables by variables)
+
+#group_by() %>%
+#summarise(get summaries)
+```
+
+
+## babynames
+
+```{r}
+head(babynames)
+?babynames
+```
+
+
+## Select()
+
+select just the `n` column:
+
+```{r}
+select(babynames,n)
+```
+
+## Quiz
+
+Which of these is NOT a way to select the `name` and `n` columns together?
+
+```{r}
+select(babynames, -c(year, sex, prop)) # minus other columns 
+select(babynames, name:n) # first variable starting with and end with the last variables selected from "name" to "n"
+select(babynames, starts_with("n"))
+select(babynames, ends_with("n")) # this does not work 
+```
+
+## Filter()
+
+Show:
+
+* All of the names where prop is greater than or equal to 0.08  
+* All of the children named "Sea"  
+  
+
+```{r}
+filter(babynames, prop>=0.08)
+filter(babynames,name=="Sea") # Quotes for characters, "==" instead of "="
+```
+
+Your turn >>>
+
+* All of the names that have a missing value for `n`
+```{r}
+filter(babynames, is.na(n))
+
+# no missing values for the frequence of babynames 
+# ?? how to take them out
+
+datawomissingvariables <- filter(babynames, !is.na(n))
+```
+
+* All of the children named either "bill" or "William"  
+```{r}
+filter(babynames, name == "bill" | name == "William")
+filter(babynames, name %in% c("bill", "William"))
+
+# if you want to take lots of characters out 
+vector
+```
+
+Use Boolean operators to alter the code below to return only the rows that contain:
+
+* Girls named Sea  
+```{r}
+filter(babynames, name == "Sea",  sex == "F")
+# working on the same varialbe &&, but different varaibles we use ,
+```
+
+* Names that were used by exactly 5 or 6 children in 1880  
+```{r}
+filter(babynames, year == 1880, n==5|n==6)
+
+# constraints on the same variable using only logical signs | , &&
+```
+
+
+## Arrange()
+
+Arrange babynames by `n`. Add `prop` as a second (tie breaking) variable to arrange on.
+
+```{r}
+arrange(babynames, n, prop) # find the smallest number of 'n'
+ 
+# first priority order, second priority order : ascending 
+```
+
+
+Use `desc()` to find the names with the highest prop.
+Then, use `desc()` to find the names with the highest n.
+
+```{r}
+arrange(babynames, desc(n))
+
+arrange(babynames, desc(prop))
+```
+
+Your turn>>>>
+
+Use `%>%` to write a sequence of functions that: 
+
+1. Filter babynames to just the girls that were born in 2015  
+2. Select the `name` and `n` columns  
+3. Arrange the results so that the most popular names are near the top.
+
+```{r}
+babynames %>%
+filter(sex == "F", year == 2015) %>%
+  select(name, n) %>%
+  arrange(desc(n))
+```
+
+
+Your turn>>>
+
+1. Trim `babynames` to just the rows that contain YOUR `name` and YOUR `sex`   (if you don't have english name, pick one name)
+2. Select the `year` and `prop` for your graph
+3. Plot the results as a line graph with `year` on the x axis and `prop` on the y axis
+
+```{r}
+babynames %>%
+  filter(name=="Katie", sex=="F") %>%
+  select(year, prop, n) %>%
+  ggplot(aes(x = year , y=prop))+
+  geom_point(col="darkgreen")
+```
+
+## Summarise()
+
+Use summarise() to compute three statistics about the data:
+
+1. The first (minimum) year in the dataset  
+2. The last (maximum) year in the dataset  
+3. The total number of children represented in the data
+
+```{r}
+babynames %>% 
+  summarise(first=min(year), last=max(year), total=sum(n))
+```
+
+Your turn >>>
+
+Extract the rows where `name == "Grace"`. Then use `summarise()` and a summary functions to find:
+
+1. The total number of children named "Grace"
+2. The first year "Grace" appeared in the data
+
+```{r}
+babynames %>%
+ filter(name =="Katie") %>%
+ summarise(first=min(year), last=max(year), total=sum(n))
+```
+
+
+
+Use `group_by()`, `summarise()`, `arrange()`, and `top_n()` to display the ten most popular names. 
+Compute popularity as the total number of children of a single gender and a name.
+
+```{r}
+
+# use top_n() function
+
+babynames %>% 
+  group_by(name, sex) %>%
+   summarise(total=sum(n)) %>%
+    arrange(desc(total)) %>%
+   ungroup() %>%
+      top_n(10, total) %>%
+   ggplot() +
+       geom_col(mapping=aes(x=name,y=total))
+  
+```
+
+Your Turn >>>
+
+Use grouping to calculate and then plot the number of children born each year over time.
+```{r}
+babynames %>%
+  group_by(year)%>%
+  summarise(total = sum(n))%>%
+  ggplot(aes(year, total))+
+  geom_point()
+```
+
+
+
+
+## Mutate()
+
+Use `min_rank()` and `mutate()` to rank each row in `babynames` from largest `n` to lowest `n`.
+
+```{r}
+babynames %>% 
+ mutate(rank=(min_rank(desc(n)))) 
+# find the most popular name
+arrange(babynames, desc(n))
+```
+
+
+
+***
+## Wrap up
+
+* Extract variables with `select()`  
+* Extract cases with `filter()`  
+* Arrange cases, with `arrange()`  
+
+* Make tables of summaries with `summarise()`  
+* Make new variables, with `mutate()`  
+* Do groupwise operations with `group_by()`
+
+* Connect operations with `%>%`  
+
+
+
