@@ -1,0 +1,170 @@
+library(tidyverse)
+library(stringr)
+library(babynames)
+library(nycflights13)
+library(forcats)
+library(lubridate)
+```
+tools for working with categorical variables (factors)
+
+Question 1: find the relation between religions and average hours of watching tv.
+
+```{r}
+relig_summary <- gss_cat %>%
+  group_by(relig) %>%
+  summarise(
+    # age = mean(age, na.rm = TRUE),
+    tvhours = mean(tvhours, na.rm = TRUE),
+  # n = n()
+  )
+
+ggplot(relig_summary, aes(tvhours, relig)) + 
+  geom_point()
+```
+
+How to interpret the plot without overall pattern? 
+
+
+### fct_reorder()
+
+Reordering the levels of a factor using *fct_reorder()*.
+
+*fct_reorder()* takes three arguments:
+
+- f, the factor whose levels you want to modify.
+
+- x, a numeric vector that you want to use to reorder the levels.
+
+- Optionally, fun, a function that’s used if there are multiple values of x for each value of f. The default value is median.
+
+```{r}
+ggplot(relig_summary, aes(tvhours, fct_reorder(relig, tvhours))) +
+  geom_point()
+```
+
+### *fct_infreq()*
+
+You can use fct_infreq() to order levels in increasing frequency: this is the simplest type of reordering because it doesn’t need any extra variables. You may want to combine with fct_rev().
+
+```{r}
+
+gss_cat %>%
+  mutate(marital = fct_infreq(marital)) %>%
+  ggplot(aes(marital)) +
+    geom_bar()
+
+gss_cat %>%
+  mutate(marital=marital %>% fct_infreq() %>% fct_rev()) %>%    # reverse order of factor levels
+  ggplot(aes(marital)) +
+    geom_bar()
+
+# %>% instead of layers of paratheses
+
+
+
+```
+
+### fct_recode
+
+```{r}
+gss_cat %>% 
+  drop_na(tvhours) %>% 
+  group_by(partyid) %>%
+  summarise(meantv=mean(tvhours)) %>%
+  ggplot(aes(x=meantv, y=fct_reorder(partyid, meantv)))+
+  geom_point()
+```
+
+but it is hard to answer the question, we need to recode factor *fct_recode()*
+# allows you to change the name when you think their categorical names are hard to answer the questions
+
+```{r}
+gss_cat %>%
+drop_na(tvhours) %>%
+mutate(partyidnew = fct_recode(partyid,
+    "Republican, strong"    = "Strong republican",
+    "Republican, weak"      = "Not str republican",
+    "Independent, near rep" = "Ind,near rep",
+    "Independent, near dem" = "Ind,near dem",
+    "Democrat, weak"        = "Not str democrat",
+    "Democrat, strong"      = "Strong democrat",
+    "Other"                 = "No answer",
+    "Other"                 = "Don't know",
+    "Other"                 = "Other party")) %>%      
+group_by(partyidnew) %>%
+summarise(tvhours = mean(tvhours)) %>%
+ggplot(aes(tvhours, fct_reorder(partyidnew,tvhours))) +
+geom_point()
+
+```
+
+### fct_collapse()
+
+If you want to collapse a lot of levels, fct_collapse() is a useful variant of fct_recode(). For each new variable, you can provide a vector of old levels:
+
+```{r}
+gss_cat %>%
+  mutate(partyid = fct_collapse(partyid,
+    other = c("No answer", "Don't know", "Other party"),
+    rep = c("Strong republican", "Not str republican"),
+    ind = c("Ind,near rep", "Independent", "Ind,near dem"),
+    dem = c("Not str democrat", "Strong democrat")
+  )) %>%
+  count(partyid)
+```
+
+
+### fct_lump()
+
+Sometimes you just want to lump together all the small groups to make a plot or table simpler. That’s the job of fct_lump()
+```{r}
+gss_cat %>%
+  mutate(relig = fct_lump(relig)) %>%
+  # divide the categories in religion into two groups one group with the largest n and the other 
+  count(relig)
+```
+
+
+but we’ve probably over collapsed:
+
+```{r}
+gss_cat %>%
+  mutate(relig = fct_lump(relig, n=5)) %>%
+  count(relig)
+```
+
+## lubridate
+
+Make Dealing with Dates a Little Easier
+
+```{r}
+a<-ymd("17/07/30")
+a
+class(a)
+
+b<-ymd("2017/07/30")
+b
+
+c<-dmy("4JUL17")
+c
+
+d<-dmy("02 July, 2017")
+d
+
+e<-ymd_hms("2017/07/30 11:00:00")
+e
+
+wday(ymd("2017/07/30"), label = TRUE)
+```
+
+## stringr
+
+```{r}
+x <- c("apple", "eggplant", "banana")
+y <- c("Apple", "Banana", "Pear")
+str_sub(x,1, 3)
+
+z <- c("apple", "banana", "pear")
+str_count(z, "a")
+
+```
